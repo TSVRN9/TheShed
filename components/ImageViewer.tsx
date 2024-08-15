@@ -3,12 +3,12 @@ import { StyleSheet, Image, ImageSourcePropType } from "react-native";
 const PlaceholderImage = require('../assets/images/background-image.png');
 
 interface ImageViewerProps {
-    source?: ImageSourcePropType,
+    sourceUri?: string,
     placeholderImageSource: ImageSourcePropType,
 }
 
-export default function ImageViewer({ source, placeholderImageSource }: ImageViewerProps) {
-    return <Image source={source || placeholderImageSource} style={styles.image}></Image>
+export default function ImageViewer({ sourceUri, placeholderImageSource }: ImageViewerProps) {
+    return <Image source={sourceUri ? { uri: sourceUri } : placeholderImageSource} style={styles.image}></Image>
 }
 
 const styles = StyleSheet.create({
