@@ -1,14 +1,17 @@
 import Button from "@/components/Button";
 import ImageViewer from "@/components/ImageViewer";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Image, View } from "react-native";
+import { StyleSheet, Image, View, ImageSourcePropType } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import PlaceholderImage from "../assets/images/background-image.png";
 import { useState } from "react";
 import IconButton from "@/components/IconButton";
 import CircleButton from "@/components/CircleButton";
 import EmojiPicker from "@/components/EmojiPicker";
+import EmojiList from "@/components/EmojiList";
+import EmojiSticker from "@/components/EmojiSticker";
 
 export default function Index() {
     const [selectedImageUri, setSelectedImageUri] = useState<
@@ -16,6 +19,7 @@ export default function Index() {
     >(undefined);
     const [showImageOptions, setShowImageOptions] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
+    const [pickedEmoji, setPickedEmoji] = useState<ImageSourcePropType>();
 
     const pickImageAsync = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -42,15 +46,18 @@ export default function Index() {
 
     const onModalClose = () => {
         setShowModal(false);
-    }
+    };
 
     return (
-        <View style={styles.container}>
+        <GestureHandlerRootView style={styles.container}>
             <View style={styles.imageContainer}>
                 <ImageViewer
                     placeholderImageSource={PlaceholderImage}
                     sourceUri={selectedImageUri}
                 ></ImageViewer>
+                {pickedEmoji && (
+                    <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
+                )}
             </View>
             <View style={styles.footerContainer}>
                 {showImageOptions ? (
@@ -79,10 +86,13 @@ export default function Index() {
                 )}
             </View>
             <EmojiPicker isVisible={showModal} onClose={onModalClose}>
-                
+                <EmojiList
+                    onSelect={setPickedEmoji}
+                    onCloseModal={onModalClose}
+                ></EmojiList>
             </EmojiPicker>
             <StatusBar style="auto" />
-        </View>
+        </GestureHandlerRootView>
     );
 }
 
