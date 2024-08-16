@@ -6,12 +6,14 @@ import * as ImagePicker from "expo-image-picker";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import PlaceholderImage from "../assets/images/background-image.png";
-import { useState } from "react";
+import { MutableRefObject, useRef, useState } from "react";
 import IconButton from "@/components/IconButton";
 import CircleButton from "@/components/CircleButton";
 import EmojiPicker from "@/components/EmojiPicker";
 import EmojiList from "@/components/EmojiList";
 import EmojiSticker from "@/components/EmojiSticker";
+import * as MediaLibrary from 'expo-media-library';
+import { captureRef } from "react-native-view-shot";
 
 export default function Index() {
     const [selectedImageUri, setSelectedImageUri] = useState<
@@ -20,6 +22,12 @@ export default function Index() {
     const [showImageOptions, setShowImageOptions] = useState<boolean>(false);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [pickedEmoji, setPickedEmoji] = useState<ImageSourcePropType>();
+    const [status, requestPermission] = MediaLibrary.usePermissions();
+    const imageRef = useRef<View>() as MutableRefObject<View>;
+
+    if (status === null) {
+        requestPermission(); // WE NEED THIS!!!
+    }
 
     const pickImageAsync = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
@@ -42,7 +50,21 @@ export default function Index() {
         setShowModal(true);
     };
 
-    const onSaveImageAsync = async () => {};
+    const onSaveImageAsync = async () => {
+        try {
+            const localUri = await captureRef(imageRef, {
+                height: 440,
+                quality: 1,
+            });
+            
+            await MediaLibrary.saveToLibraryAsync(localUri);
+            if (localUri) {
+                alert("Saved!");
+            }
+        } catch (e: any) {
+            console.error(e);
+        }
+    };
 
     const onModalClose = () => {
         setShowModal(false);
@@ -51,13 +73,15 @@ export default function Index() {
     return (
         <GestureHandlerRootView style={styles.container}>
             <View style={styles.imageContainer}>
-                <ImageViewer
-                    placeholderImageSource={PlaceholderImage}
-                    sourceUri={selectedImageUri}
-                ></ImageViewer>
-                {pickedEmoji && (
-                    <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
-                )}
+                <View ref={imageRef} collapsable={false}>
+                    <ImageViewer
+                        placeholderImageSource={PlaceholderImage}
+                        sourceUri={selectedImageUri}
+                    ></ImageViewer>
+                    {pickedEmoji && (
+                        <EmojiSticker imageSize={40} stickerSource={pickedEmoji} />
+                    )}
+                </View>
             </View>
             <View style={styles.footerContainer}>
                 {showImageOptions ? (
@@ -91,7 +115,7 @@ export default function Index() {
                     onCloseModal={onModalClose}
                 ></EmojiList>
             </EmojiPicker>
-            <StatusBar style="auto" />
+            <StatusBar style="light" />
         </GestureHandlerRootView>
     );
 }
