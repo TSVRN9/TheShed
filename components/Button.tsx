@@ -4,10 +4,11 @@ import { StyleSheet, View, Pressable, Text, GestureResponderEvent } from "react-
 interface ButtonProps {
   label: string;
   primary?: boolean;
+  icon?: keyof typeof FontAwesome.glyphMap;
   onPress?: (event: GestureResponderEvent) => void;
 }
 
-export default function Button({ label, primary = false , onPress = () => {} }: ButtonProps) {
+export default function Button({ label, primary = false , icon = "picture-o", onPress = () => {} }: ButtonProps) {
   if (primary) {
     return (
       <View
@@ -21,7 +22,7 @@ export default function Button({ label, primary = false , onPress = () => {} }: 
           onPress={onPress}
         >
           <FontAwesome
-            name="picture-o"
+            name={icon}
             size={18}
             color="#25292e"
             style={styles.buttonIcon}
