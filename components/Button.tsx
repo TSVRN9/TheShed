@@ -5,10 +5,11 @@ interface ButtonProps {
   label: string;
   primary?: boolean;
   icon?: keyof typeof FontAwesome.glyphMap;
+  disabled?: boolean;
   onPress?: (event: GestureResponderEvent) => void;
 }
 
-export default function Button({ label, primary = false , icon = "picture-o", onPress = () => {} }: ButtonProps) {
+export default function Button({ label, primary = false , icon = "picture-o", disabled = false, onPress = () => {} }: ButtonProps) {
   if (primary) {
     return (
       <View
@@ -18,7 +19,8 @@ export default function Button({ label, primary = false , icon = "picture-o", on
         ]}
       >
         <Pressable
-          style={[styles.button, { backgroundColor: "#fff" }]}
+          style={[styles.button, { backgroundColor: disabled ? "#888" : "#fff" }]}
+          disabled={disabled}
           onPress={onPress}
         >
           <FontAwesome
@@ -38,6 +40,7 @@ export default function Button({ label, primary = false , icon = "picture-o", on
       <View style={styles.buttonContainer}>
         <Pressable
           style={styles.button}
+          disabled={disabled}
           onPress={onPress}
         >
           <Text style={styles.buttonLabel}>{label}</Text>

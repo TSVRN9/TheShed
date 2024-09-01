@@ -1,12 +1,19 @@
 import Button from "@/components/Button";
 import ImageViewer from "@/components/ImageViewer";
 import { StatusBar } from "expo-status-bar";
-import { StyleSheet, Image, View, ImageSourcePropType } from "react-native";
+import {
+    StyleSheet,
+    Image,
+    View,
+    ImageSourcePropType,
+    BackHandler,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as Linking from "expo-linking";
 
 import PlaceholderImage from "../assets/images/background-image.png";
-import { MutableRefObject, useRef, useState } from "react";
+import { MutableRefObject, useEffect, useRef, useState } from "react";
 import IconButton from "@/components/IconButton";
 import CircleButton from "@/components/CircleButton";
 import EmojiPicker from "@/components/EmojiPicker";
@@ -33,14 +40,36 @@ export default function Index() {
     const [status, requestPermission] = MediaLibrary.usePermissions();
     const imageRef = useRef<View>() as MutableRefObject<View>;
 
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+        });
+
+        supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+        });
+
+        BackHandler.addEventListener("hardwareBackPress", () => {
+            if (session) {
+                supabase.auth.signOut().then(() => {
+                    setSession(null);
+                });
+                return true;
+            }
+            return false;
+        });
+    }, []);
+
     if (status === null) {
         requestPermission(); // WE NEED THIS!!!
     }
 
     const pickImageAsync = async () => {
         const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             quality: 1,
+            exif: false,
         });
 
         if (!result.canceled) {
@@ -52,6 +81,7 @@ export default function Index() {
     const onReset = () => {
         setSelectedImageUri(undefined);
         setShowImageOptions(false);
+        setPickedEmoji(undefined);
     };
 
     const onAddSticker = () => {
@@ -65,10 +95,32 @@ export default function Index() {
                 quality: 1,
             });
 
-            await MediaLibrary.saveToLibraryAsync(localUri);
-            if (localUri) {
-                alert("Saved!");
+            // await MediaLibrary.saveToLibraryAsync(localUri);
+            // if (localUri) {
+            //     alert("Saved!");
+            // }
+
+            const arraybuffer = await fetch(localUri).then((res) =>
+                res.arrayBuffer(),
+            );
+
+            const path = `${session?.user.id}/picture.png`;
+
+            const { data, error } = await supabase.storage
+                .from("media")
+                .upload(path, arraybuffer, {
+                    upsert: true,
+                });
+            if (error) {
+                alert(error);
+                return;
             }
+
+            const {
+                data: { publicUrl },
+            } = await supabase.storage.from("media").getPublicUrl(path);
+
+            await Linking.openURL(publicUrl);
         } catch (e: any) {
             console.error(e);
         }

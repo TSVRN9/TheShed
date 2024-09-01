@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { supabase } from "../lib/supabase";
 import Button from "./Button";
 
@@ -9,9 +9,38 @@ export default function Auth() {
     const [loading, setLoading] = useState(false);
     const [isLogin, setIsLogin] = useState(true);
 
+    const onSignup = async () => {
+        setLoading(true);
+
+        const {
+            data: { session },
+            error,
+        } = await supabase.auth.signUp({
+            email, password
+        });
+
+        if (error) Alert.alert(error.message)
+        if (!session) Alert.alert('Please check your inbox for email verification!')
+        setLoading(false)
+    };
+
+    const onLogin = async () => {
+        setLoading(true);
+
+        const {
+            data: { session },
+            error,
+        } = await supabase.auth.signInWithPassword({
+            email, password
+        });
+
+        if (error) Alert.alert(error.message)
+        setLoading(false);
+    };
+
     return (
         <View style={styles.container}>
-            <Text>
+            <Text style={styles.title}>
                 {isLogin ? "Login" : "Sign up"}
             </Text>
             <View style={styles.inputContainer}>
@@ -34,10 +63,15 @@ export default function Auth() {
                 />
             </View>
             <View style={styles.footerContainer}>
+                <Pressable onPress={() => setIsLogin(!isLogin)}>
+                    <Text style={styles.toggleLoginText}>
+                        {isLogin ? "Don't have an account?" : "Already have an account?"}
+                    </Text>
+                </Pressable>
                 {isLogin ? (
-                    <Button primary={true} label="Login" icon="lock" />
+                    <Button primary={true} disabled={loading} label="Login" onPress={onLogin} icon="lock" />
                 ) : (
-                    <Button primary={true} label="Sign up" icon="lock" />
+                    <Button primary={true} disabled={loading} label="Sign up" onPress={onSignup} icon="lock" />
                 )}
             </View>
         </View>
@@ -45,6 +79,10 @@ export default function Auth() {
 }
 
 const styles = StyleSheet.create({
+    title: {
+        color: '#fff',
+        fontSize: 40
+    },
     container: {
         backgroundColor: "#25292e",
         flex: 1,
@@ -56,10 +94,11 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         flex: 1,
-        gap: 20,
+        gap: 14,
     },
     footerContainer: {
-        flex: 1 / 3,
+        flex: 2 / 5,
+        gap: 24,
     },
     input: {
         width: 320,
@@ -68,8 +107,12 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
         borderRadius: 20,
         backgroundColor: "#fff",
-        borderWidth: 4,
-        borderColor: "#ffd33d",
+        fontSize: 18,
         color: "#25292e",
     },
+    toggleLoginText: {
+        textAlign: 'center',
+        color: '#aaa',
+        fontSize: 14
+    }
 });
