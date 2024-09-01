@@ -26,7 +26,7 @@ import { captureRef } from "react-native-view-shot";
 import { supabase } from "../lib/supabase";
 // import Auth from "../components/Auth";
 // import Account from "../components/Account";
-import { Session } from "@supabase/supabase-js";
+import { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 export default function Index() {
     const [session, setSession] = useState<Session | null>(null);
@@ -45,18 +45,19 @@ export default function Index() {
             setSession(session);
         });
 
-        supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-        });
+        supabase.auth.onAuthStateChange(
+            (_event: AuthChangeEvent, session: Session | null) => {
+                setSession(session);
+            },
+        );
 
         BackHandler.addEventListener("hardwareBackPress", () => {
             if (session) {
-                supabase.auth.signOut().then(() => {
-                    setSession(null);
-                });
+                supabase.auth.signOut();
                 return true;
+            } else {
+                return false;
             }
-            return false;
         });
     }, []);
 
@@ -135,7 +136,11 @@ export default function Index() {
             {session ? (
                 <>
                     <View style={styles.imageContainer}>
-                        <View ref={imageRef} collapsable={false}>
+                        <View
+                            style={styles.viewerContainer}
+                            ref={imageRef}
+                            collapsable={false}
+                        >
                             <ImageViewer
                                 placeholderImageSource={PlaceholderImage}
                                 sourceUri={selectedImageUri}
@@ -199,6 +204,12 @@ const styles = StyleSheet.create({
     imageContainer: {
         flex: 1,
         paddingTop: 58,
+    },
+    viewerContainer: {
+        width: 320,
+        height: 440,
+        borderRadius: 18,
+        overflow: "hidden",
     },
     footerContainer: {
         flex: 1 / 3,
